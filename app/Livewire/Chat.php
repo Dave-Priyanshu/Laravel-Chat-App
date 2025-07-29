@@ -2,9 +2,11 @@
 
 namespace App\Livewire;
 
+use App\Events\MessageSentEvent;
 use App\Models\Message;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 class Chat extends Component
@@ -50,10 +52,27 @@ class Chat extends Component
     }
 
     public function sendMessage(){
-        // dd($this->message);
-        $this->saveMessage();
+        //  Save the Messaghe
+        $sentMessage = $this->saveMessage();
+
+        // assign latest message
+        $this->messages[] = $sentMessage;
+
+        // broadcast the message
+        broadcast(new MessageSentEvent($sentMessage));
 
         $this->message = null;
+
+        // dispacthing event to scroll to the latest message
+        $this->dispatch('messages-updated');
+    }
+
+    #[On('echo-private:chat-channel.{senderId},MessageSentEvent')]
+    public function listenMessage($event){
+
+        // convert message to eleqount
+        $newMessage = Message::find($event['message']['id'])->load('sender:id,name','receiver:id,name');
+        $this->messages[] = $newMessage;
     }
 
     public function saveMessage(){

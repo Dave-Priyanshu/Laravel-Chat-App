@@ -8,6 +8,10 @@
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+
+            {{-- chat container area --}}
+            <div id="chat-container">
+
             <div class="w-full bg-white rounded-lg shadow-lg p-6">
                 <!-- Chat Messages -->
                 <div class="flex flex-col gap-4 pb-6 max-h-[500px] overflow-y-auto">
@@ -79,6 +83,15 @@
 
                 </form>
             </div>
+
+            </div>
         </div>
     </div>
 </div>
+
+<script type="module">
+    let chatContainer = document.getElementById('chat-container');
+    Livewire.on('messages-updated',() =>{
+        window.scrollTo(0, chatContainer.scrollHeight);
+    });
+</script>
