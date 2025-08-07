@@ -40,7 +40,7 @@
                                                             3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25Z" />
                                                     </svg>
                                                     
-                                                    <span class="{{$user->unread_message_count > 0 ? 'bg-red-600 text-white px-2 py-1 rounded-full text-xs font-bold': ''}}">
+                                                    <span id="unread-count-{{ $user->id }}" class="{{$user->unread_message_count > 0 ? 'bg-red-600 text-white px-2 py-1 rounded-full text-xs font-bold': ''}}">
                                                         {{ $user->unread_message_count >0 ? $user->unread_message_count : null  }}
                                                     </span>
                                                 </a>
@@ -61,3 +61,14 @@
         </div>
     </div>
 </x-app-layout>
+
+<script type="module">
+    window.Echo.private('unread-channel.{{ Auth::user()->id }}').listen('UnreadMessage', (event) => {
+        const unreadElementCount = document.getElementById(`unread-count-${event.senderId}`);
+
+        if(unreadElementCount){
+            unreadElementCount.textContent = event.unreadMessageCount > 0 ? event.unreadMessageCount : '';
+        }
+
+    })
+</script>

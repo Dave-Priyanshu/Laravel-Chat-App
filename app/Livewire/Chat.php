@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Events\MessageSentEvent;
+use App\Events\UnreadMessage;
 use App\Events\UserTyping;
 use App\Models\Message;
 use App\Models\User;
@@ -24,13 +25,17 @@ class Chat extends Component
         $this->senderId = Auth::id();
         $this->receiverId = $userId;
         $this->messages = $this->getMessages();
-        $this->dispatch('messages-updated'); // Changed from 'message-updated' for consistency
+        $this->dispatch('messages-updated'); 
+        
+        $this->readAllMessages();
     }
 
     public function render()
     {
+        $this->readAllMessages();
+
         return view('livewire.chat', [
-            'senderId' => $this->senderId, // Pass senderId to Blade
+            'senderId' => $this->senderId, 
         ]);
     }
 
@@ -53,6 +58,13 @@ class Chat extends Component
         broadcast(new UserTyping($this->senderId, $this->receiverId))->toOthers();
     }
 
+    public function readAllMessages(){
+        Message::where('sender_id',$this->receiverId)
+        ->where('receiver_id',$this->senderId)
+        ->where('is_read', false)
+        ->update(['is_read' => true]);
+    }
+
     public function getUser($userId)
     {
         return User::find($userId);
@@ -63,8 +75,17 @@ class Chat extends Component
         $sentMessage = $this->saveMessage();
         $this->messages[] = $sentMessage;
         broadcast(new MessageSentEvent($sentMessage));
+
+        $unreadMessageCount = $this->getUnreadMessageCount();
+        broadcast(new UnreadMessage($this->senderId, $this->receiverId,$unreadMessageCount))->toOthers();
         $this->message = null;
         $this->dispatch('messages-updated');
+
+    }
+
+    public function getUnreadMessageCount(){
+        return Message::where('receiver_id',$this->receiverId)
+        ->where('is_read', false)->count();
     }
 
     #[On('echo-private:chat-channel.{senderId},MessageSentEvent')]
